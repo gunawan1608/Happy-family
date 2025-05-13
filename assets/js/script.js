@@ -252,56 +252,53 @@ document.querySelectorAll('[data-aos]').forEach(element => {
     observer.observe(element);
 });
 
-// Make navbar sticky on scroll with animation
+// Update scroll handler to handle sticky navbar and active section highlighting
 window.addEventListener('scroll', () => {
-    // Navbar effects
-    if (window.scrollY > 50) {
+    // Highlight active menu item based on scroll position
+    highlightActiveSection();
+    
+    // Add shadow on scroll
+    if (window.scrollY > 10) {
         navbar.classList.add('scrolled');
     } else {
         navbar.classList.remove('scrolled');
     }
-    
-    // Highlight active menu item based on scroll position
-    highlightActiveSection();
 });
 
-// Mobile menu toggle with animation
-if (menuToggle) {
-    // Gunakan click event untuk kompatibilitas dengan tampilan awal
-    menuToggle.addEventListener('click', function() {
+// Menu toggle functionality
+if (menuToggle && navLinksContainer && menuOverlay) {
+    menuToggle.addEventListener('click', () => {
         navLinksContainer.classList.toggle('active');
-        if (menuOverlay) menuOverlay.classList.toggle('active');
-        
-        // Add animation to menu toggle icon
-        if (navLinksContainer.classList.contains('active')) {
-            menuToggle.innerHTML = '<i class="fas fa-times"></i>';
-            document.body.style.overflow = 'hidden';
-            // Animate menu items sequentially
-            navLinks.forEach((link, index) => {
-                link.style.opacity = '0';
-                link.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    link.style.transition = 'all 0.3s ease';
-                    link.style.opacity = '1';
-                    link.style.transform = 'translateY(0)';
-                }, 100 * index);
-            });
-        } else {
-            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
-            document.body.style.overflow = 'auto';
-        }
+        menuOverlay.classList.toggle('active');
+        document.body.classList.toggle('menu-open');
     });
-}
 
-// Handle menu overlay click
-if (menuOverlay) {
     menuOverlay.addEventListener('click', () => {
         navLinksContainer.classList.remove('active');
         menuOverlay.classList.remove('active');
-        menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
-        document.body.style.overflow = 'auto';
+        document.body.classList.remove('menu-open');
+    });
+
+    // Close menu when a nav link is clicked
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            navLinksContainer.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            document.body.classList.remove('menu-open');
+        });
     });
 }
+
+// Navbar scroll effect
+window.addEventListener('scroll', () => {
+    if (navbar) {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    }
+});
 
 // Smooth scroll for navigation links with improved animation
 navLinks.forEach(link => {
@@ -320,7 +317,7 @@ navLinks.forEach(link => {
             document.body.style.overflow = 'auto';
         }
         
-        // Scroll to section
+        // Scroll to section with navbar offset
         window.scrollTo({
             top: targetSection.offsetTop - navbarHeight,
             behavior: 'smooth'
@@ -350,7 +347,7 @@ function highlightActiveSection() {
     
     // Check each section's position relative to scroll position
     sections.forEach(section => {
-        const sectionTop = section.offsetTop - navbarHeight - 100;
+        const sectionTop = section.offsetTop - navbarHeight - 20;
         const sectionBottom = sectionTop + section.offsetHeight;
         const sectionId = section.getAttribute('id');
         
@@ -369,7 +366,7 @@ function highlightActiveSection() {
     });
     
     // Handle home section (header) separately for better UX
-    if (scrollPosition < document.getElementById('about').offsetTop - navbarHeight - 100) {
+    if (scrollPosition < document.getElementById('about').offsetTop - navbarHeight - 20) {
         navLinks.forEach(link => {
             link.classList.remove('active');
         });
