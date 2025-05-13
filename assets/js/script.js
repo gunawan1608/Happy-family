@@ -3,30 +3,20 @@ const navbar = document.getElementById('navbar');
 const navLinks = document.querySelectorAll('.nav-links a');
 const menuToggle = document.querySelector('.menu-toggle');
 const navLinksContainer = document.querySelector('.nav-links');
+const menuOverlay = document.querySelector('.menu-overlay');
 const sections = document.querySelectorAll('section');
 const header = document.getElementById('home');
-const memoryCards = document.querySelectorAll('.memory-card');
+const memoryCards = document.querySelectorAll('.memory-card:not(.coming-soon-card)');
 const heroIcons = document.querySelectorAll('.hero-icon');
 const heroTitle = document.querySelector('.main-title');
 const heroTagline = document.querySelector('.tagline');
 const heroQuote = document.querySelector('.hero-quote');
 const heroBadge = document.querySelector('.hero-badge');
 const discoverMoreBtn = document.querySelector('.discover-more');
-const addMemoryBtn = document.getElementById('addMemoryBtn');
-const memoryModal = document.getElementById('memoryModal');
-const closeModalBtn = document.querySelector('.close-modal');
-const memoryForm = document.getElementById('memoryForm');
-const imagePreview = document.getElementById('imagePreview');
-const memoryImageInput = document.getElementById('memoryImage');
-const memoriesGrid = document.querySelector('.memories-grid');
 const aboutSection = document.getElementById('about');
 const aboutImage = document.querySelector('.about-image');
 const memberCards = document.querySelectorAll('.member-card');
 const listViewBtns = document.querySelectorAll('.list-view-btn');
-const deleteMemoryBtns = document.querySelectorAll('.delete-memory');
-const deleteModal = document.getElementById('deleteModal');
-const cancelDeleteBtn = document.getElementById('cancelDelete');
-const confirmDeleteBtn = document.getElementById('confirmDelete');
 
 // Initialize current year for copyright
 const footerYear = document.querySelector('.copyright');
@@ -173,6 +163,7 @@ function setupMemoryCardsEffects() {
                 const viewType = this.getAttribute('data-view');
                 
                 // Toggle class on memories grid
+                const memoriesGrid = document.querySelector('.memories-grid');
                 if (memoriesGrid) {
                     if (viewType === 'list') {
                         memoriesGrid.classList.add('list-view');
@@ -220,76 +211,6 @@ function setupMemoryCardsEffects() {
                 this.style.transform = '';
             }, 300);
         });
-    });
-}
-
-// Setup delete memory functionality
-function setupDeleteMemoryFunctionality() {
-    let memoryToDelete = null;
-    
-    // Open delete confirmation modal
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('delete-memory') || 
-            (e.target.parentElement && e.target.parentElement.classList.contains('delete-memory'))) {
-            
-            // Get the memory card
-            const btn = e.target.classList.contains('delete-memory') ? e.target : e.target.parentElement;
-            const memoryCard = btn.closest('.memory-card');
-            
-            if (memoryCard && deleteModal) {
-                e.preventDefault();
-                memoryToDelete = memoryCard;
-                deleteModal.style.display = 'block';
-            }
-        }
-    });
-    
-    // Cancel delete action
-    if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', function() {
-            memoryToDelete = null;
-            deleteModal.style.display = 'none';
-        });
-    }
-    
-    // Confirm delete action
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', function() {
-            if (memoryToDelete) {
-                // Animate card removal
-                memoryToDelete.style.transition = 'all 0.5s ease';
-                memoryToDelete.style.transform = 'scale(0.8)';
-                memoryToDelete.style.opacity = '0';
-                
-                setTimeout(() => {
-                    memoryToDelete.remove();
-                    memoryToDelete = null;
-                    deleteModal.style.display = 'none';
-                    
-                    // Show success message
-                    const successMessage = document.createElement('div');
-                    successMessage.className = 'success-message';
-                    successMessage.textContent = 'Memory deleted successfully!';
-                    
-                    document.body.appendChild(successMessage);
-                    
-                    setTimeout(() => {
-                        successMessage.style.opacity = '0';
-                        setTimeout(() => {
-                            document.body.removeChild(successMessage);
-                        }, 500);
-                    }, 2000);
-                }, 500);
-            }
-        });
-    }
-    
-    // Close modal when clicking outside
-    window.addEventListener('click', function(e) {
-        if (e.target === deleteModal) {
-            memoryToDelete = null;
-            deleteModal.style.display = 'none';
-        }
     });
 }
 
@@ -346,12 +267,15 @@ window.addEventListener('scroll', () => {
 
 // Mobile menu toggle with animation
 if (menuToggle) {
-    menuToggle.addEventListener('click', () => {
+    // Gunakan click event untuk kompatibilitas dengan tampilan awal
+    menuToggle.addEventListener('click', function() {
         navLinksContainer.classList.toggle('active');
+        if (menuOverlay) menuOverlay.classList.toggle('active');
         
         // Add animation to menu toggle icon
         if (navLinksContainer.classList.contains('active')) {
             menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+            document.body.style.overflow = 'hidden';
             // Animate menu items sequentially
             navLinks.forEach((link, index) => {
                 link.style.opacity = '0';
@@ -364,19 +288,20 @@ if (menuToggle) {
             });
         } else {
             menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+            document.body.style.overflow = 'auto';
         }
     });
 }
 
-// Close mobile menu when a link is clicked
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
+// Handle menu overlay click
+if (menuOverlay) {
+    menuOverlay.addEventListener('click', () => {
         navLinksContainer.classList.remove('active');
-        if (menuToggle) {
-            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
-        }
+        menuOverlay.classList.remove('active');
+        menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        document.body.style.overflow = 'auto';
     });
-});
+}
 
 // Smooth scroll for navigation links with improved animation
 navLinks.forEach(link => {
@@ -387,7 +312,15 @@ navLinks.forEach(link => {
         const targetSection = document.querySelector(targetId);
         const navbarHeight = navbar.offsetHeight;
         
-        // Smooth scroll with easing
+        // Close mobile menu if open
+        if (window.innerWidth <= 768 && navLinksContainer.classList.contains('active')) {
+            navLinksContainer.classList.remove('active');
+            if (menuOverlay) menuOverlay.classList.remove('active');
+            if (menuToggle) menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Scroll to section
         window.scrollTo({
             top: targetSection.offsetTop - navbarHeight,
             behavior: 'smooth'
@@ -473,171 +406,17 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// Memory Upload Modal Functionality
-if (addMemoryBtn && memoryModal) {
-    // Open modal
-    addMemoryBtn.addEventListener('click', () => {
-        memoryModal.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
-    });
-
-    // Close modal
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', () => {
-            memoryModal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        });
-    }
-
-    // Close modal when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === memoryModal) {
-            memoryModal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-    });
-}
-
-// Image preview functionality for memory upload
-if (memoryImageInput && imagePreview) {
-    memoryImageInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                imagePreview.innerHTML = `<img src="${e.target.result}" alt="Memory preview">`;
-            }
-            
-            reader.readAsDataURL(file);
-        } else {
-            imagePreview.innerHTML = `<p>No image selected</p>`;
-        }
-    });
-}
-
-// Memory form submission
-if (memoryForm && memoriesGrid) {
-    memoryForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const title = document.getElementById('memoryTitle').value;
-        const date = document.getElementById('memoryDate').value;
-        const description = document.getElementById('memoryDescription').value;
-        const file = document.getElementById('memoryImage').files[0];
-        
-        if (title && description && file && date) {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                // Format date for display
-                const formattedDate = new Date(date).toLocaleDateString('en-US', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                });
-                
-                // Generate a unique ID for the memory
-                const memoryId = 'memory' + Date.now();
-                
-                // Create new memory card
-                const newCard = document.createElement('div');
-                newCard.className = 'memory-card';
-                newCard.setAttribute('data-aos', 'fade-up');
-                newCard.setAttribute('data-id', memoryId);
-                
-                newCard.innerHTML = `
-                    <div class="memory-img">
-                        <img src="${e.target.result}" alt="${title}">
-                        <div class="memory-actions">
-                            <button class="delete-memory" title="Delete Memory"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                    <div class="memory-content">
-                        <div class="memory-date">
-                            <i class="far fa-calendar-alt"></i> ${formattedDate}
-                        </div>
-                        <h3>${title}</h3>
-                        <p>${description}</p>
-                    </div>
-                `;
-                
-                // Apply the same effects to the new card as we do for existing cards
-                newCard.addEventListener('mousemove', function(e) {
-                    const cardRect = this.getBoundingClientRect();
-                    const cardCenterX = cardRect.left + cardRect.width / 2;
-                    const cardCenterY = cardRect.top + cardRect.height / 2;
-                    
-                    const mouseX = e.clientX - cardCenterX;
-                    const mouseY = e.clientY - cardCenterY;
-                    
-                    // Calculate rotation based on mouse position
-                    const rotateX = mouseY * -0.05;
-                    const rotateY = mouseX * 0.05;
-                    
-                    this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
-                });
-                
-                newCard.addEventListener('mouseleave', function() {
-                    this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 300);
-                });
-                
-                // Add hover effects to the new card
-                newCard.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-15px) scale(1.02)';
-                    this.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.15)';
-                });
-                
-                newCard.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0) scale(1)';
-                    this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
-                });
-                
-                // Add the new card to the grid (at the beginning)
-                memoriesGrid.insertBefore(newCard, memoriesGrid.firstChild);
-                
-                // Add entrance animation
-                newCard.style.opacity = '0';
-                newCard.style.transform = 'translateY(30px)';
-                
-                setTimeout(() => {
-                    newCard.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                    newCard.style.opacity = '1';
-                    newCard.style.transform = 'translateY(0)';
-                }, 100);
-                
-                // Clear form and close modal
-                memoryForm.reset();
-                imagePreview.innerHTML = `<p>No image selected</p>`;
-                memoryModal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-                
-                // Show success message
-                const successMessage = document.createElement('div');
-                successMessage.className = 'success-message';
-                successMessage.textContent = 'Memory added successfully!';
-                
-                document.body.appendChild(successMessage);
-                
-                setTimeout(() => {
-                    successMessage.style.opacity = '0';
-                    setTimeout(() => {
-                        document.body.removeChild(successMessage);
-                    }, 500);
-                }, 2000);
-            };
-            
-            reader.readAsDataURL(file);
-        }
-    });
-}
-
 // Handle responsive design issues
 function handleResponsiveDesign() {
     const width = window.innerWidth;
+    
+    // Reset mobile menu when resize
+    if (width > 768 && navLinksContainer) {
+        navLinksContainer.classList.remove('active');
+        if (menuOverlay) menuOverlay.classList.remove('active');
+        if (menuToggle) menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        document.body.style.overflow = 'auto';
+    }
     
     // Adjust hero title font size for small screens
     if (heroTitle) {
@@ -659,6 +438,30 @@ function handleResponsiveDesign() {
 
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', () => {
+    // Pastikan menu mobile tersembunyi di awal
+    if (navLinksContainer) {
+        navLinksContainer.classList.remove('active');
+        if (menuOverlay) menuOverlay.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+    
+    // Aktifkan link Home di awal
+    const homeLink = document.querySelector('.nav-links a[href="#home"]');
+    if (homeLink) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        homeLink.classList.add('active');
+    }
+    
+    // Memperbaiki touch event untuk perangkat mobile
+    if ('ontouchstart' in window) {
+        navLinks.forEach(link => {
+            link.addEventListener('touchstart', function(e) {
+                // Pastikan event listener click juga masih bisa berjalan
+                this.click();
+            });
+        });
+    }
+    
     // Initialize active section highlighting
     highlightActiveSection();
     
@@ -683,9 +486,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize enhanced memory cards effects
     setupMemoryCardsEffects();
-    
-    // Initialize delete memory functionality
-    setupDeleteMemoryFunctionality();
     
     // Handle responsive design
     handleResponsiveDesign();
